@@ -114,7 +114,7 @@ async fn resolve_raw_input(input: &str) -> Result<String, String> {
                 &HashMap::new(),
                 None,
                 None,
-                MAX_PACKAGE_JSON_BYTES,
+                MAX_PACKAGE_JSON_BYTES * 2,
                 15,
             )
             .await
@@ -122,11 +122,24 @@ async fn resolve_raw_input(input: &str) -> Result<String, String> {
                 Ok(resp) => {
                     let status = resp.get("status").and_then(Value::as_u64).unwrap_or(0);
                     if (200..300).contains(&status) {
-                        return Ok(resp
+                        let text = resp
                             .get("text")
                             .and_then(Value::as_str)
+                            .unwrap_or("");
+                        let ct = resp
+                            .get("headers")
+                            .and_then(|h| h.get("content-type"))
+                            .and_then(Value::as_str)
                             .unwrap_or("")
-                            .to_string());
+                            .to_ascii_lowercase();
+                        let head = text.trim_start().as_bytes();
+                        let looks_html = ct.starts_with("text/html")
+                            || head.get(..14).is_some_and(|b| b.eq_ignore_ascii_case(b"<!doctype html"))
+                            || head.get(..5).is_some_and(|b| b.eq_ignore_ascii_case(b"<html"));
+                        if looks_html {
+                            return Err("该链接返回的是网页而非视频源文件，请填写原始文件链接或直接粘贴分享口令".into());
+                        }
+                        return Ok(text.to_string());
                     }
                     last_err = format!("拉取远程视频源失败（HTTP {status}）");
                 }

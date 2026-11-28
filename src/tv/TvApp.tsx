@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../shared/api/api";
+import { formatSourceImportError } from "../shared/api/errorFormat";
 import { exitApp } from "../shared/lib/appLifecycle";
 import { IHome, IGrid, ISearch, IStar, ISettings, Logo } from "../shared/ui/icons";
 import { useContentPreferences } from "../shared/model/contentPreferences";
@@ -153,7 +154,7 @@ export default function TvApp(){
       {deepErr&&<p role="alert" style={{color:"#f87171",marginBottom:10}}>{deepErr}</p>}
       <div className="tv-options">
         <button data-tv-focus="dl-cancel" disabled={deepBusy} onClick={()=>{setDeepErr("");clearDeepLink();}}>取消</button>
-        <button data-tv-focus="dl-go" disabled={deepBusy} onClick={()=>{setDeepBusy(true);setDeepErr("");void api.sourceImport(deepLink,true).then(()=>{window.dispatchEvent(new Event("hg:line-changed"));window.dispatchEvent(new Event("hg:source-changed"));clearDeepLink();}).catch(e=>setDeepErr(String(e))).finally(()=>setDeepBusy(false));}}>{deepBusy?"导入中…":"导入"}</button>
+        <button data-tv-focus="dl-go" disabled={deepBusy} onClick={()=>{setDeepBusy(true);setDeepErr("");void api.sourceImport(deepLink,true).then(()=>{window.dispatchEvent(new Event("hg:line-changed"));window.dispatchEvent(new Event("hg:source-changed"));clearDeepLink();}).catch(e=>setDeepErr(formatSourceImportError(e).message)).finally(()=>setDeepBusy(false));}}>{deepBusy?"导入中…":"导入"}</button>
       </div>
     </TvModal>}
   </div>;

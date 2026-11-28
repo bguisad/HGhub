@@ -10,6 +10,7 @@ import {
   type TvBidirectionalSyncResult,
   type TvSyncData,
 } from "../../shared/api/api";
+import { formatSourceImportError } from "../../shared/api/errorFormat";
 import { decodeQrFromFile, decodeQrFromVideo, hasNativeBarcodeDetector, parseTvLanTarget } from "../../shared/lib/qrDecode";
 import { registerOverlayBack } from "../../shared/lib/back";
 import { useContentPreferences, mergeContentPreferences } from "../../shared/model/contentPreferences";
@@ -361,7 +362,7 @@ export default function TvQrSyncModal({
       }
     } catch (e) {
       setStatus("error");
-      setError(e instanceof Error ? e.message : String(e || tr("失败")));
+      setError(formatSourceImportError(e).message);
     } finally {
       busyRef.current = false;
     }

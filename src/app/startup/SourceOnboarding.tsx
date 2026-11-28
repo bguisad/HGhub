@@ -3,6 +3,7 @@ import {
   api, isMobile,
   type SourceStateSnapshot, type SubscriptionPreview, type SubscriptionSiteInput,
 } from "../../shared/api/api";
+import { formatSourceImportError } from "../../shared/api/errorFormat";
 import { useStore } from "../../shared/model/store";
 import { Button, Surface, TextArea } from "../../shared/ui/ios/controls";
 import { ILink, IScan, ISettings, Logo } from "../../shared/ui/icons";
@@ -25,6 +26,7 @@ export default function SourceOnboarding({
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [errorNetwork, setErrorNetwork] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionPreview | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -40,6 +42,7 @@ export default function SourceOnboarding({
     if (!raw || busy) return;
     setBusy(true);
     setError("");
+    setErrorNetwork(false);
     try {
       const res = await api.sourceResolveImport(raw, true);
       if (res.kind === "subscription") {
@@ -50,7 +53,9 @@ export default function SourceOnboarding({
       toast(tr("已导入 {0} v{1}", res.summary.name, res.summary.version), "ok");
       notify();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e || tr("失败")));
+      const formatted = formatSourceImportError(e);
+      setError(formatted.message);
+      setErrorNetwork(formatted.networkish);
     } finally {
       setBusy(false);
     }
@@ -100,6 +105,7 @@ export default function SourceOnboarding({
     try {
       setDraft((await file.text()).trim());
     } catch {
+      setErrorNetwork(false);
       setError(tr("读取文件失败"));
     } finally {
       if (fileRef.current) fileRef.current.value = "";
@@ -109,6 +115,7 @@ export default function SourceOnboarding({
   const activateExisting = async (id: string, name: string) => {
     setBusy(true);
     setError("");
+    setErrorNetwork(false);
     try {
       await api.sourceActivate(id);
       toast(tr("已启用视频源：{0}", name), "ok");
@@ -124,6 +131,7 @@ export default function SourceOnboarding({
     if (busy) return;
     setBusy(true);
     setError("");
+    setErrorNetwork(false);
     try {
       await api.sourceImport(buildDemoOfflinePackageJson(), true);
       toast(tr("已启用离线示例源"), "ok");
@@ -182,7 +190,20 @@ export default function SourceOnboarding({
                   onChange={(e) => setDraft(e.target.value)}
                   className="w-full h-24 p-3 rounded-(--r-sm) bg-s3 text-[12px] text-on font-mono resize-none"
                 />
-                {error && <p role="alert" className="text-[12px] text-danger break-words">{error}</p>}
+                {error && (
+                  <div role="alert" className="text-[12px] text-danger break-words space-y-2">
+                    <p>{error}</p>
+                    {errorNetwork && (
+                      <Button
+                        onClick={onOpenSettings}
+                        className="h-7 px-2.5 rounded-(--r-sm) bg-s3 text-[12px] text-on inline-flex items-center gap-1 pressable"
+                      >
+                        <ISettings size={12} />
+                        <span>{tr("网络与代理设置")}</span>
+                      </Button>
+                    )}
+                  </div>
+                )}
                 <Button
                   disabled={busy || !draft.trim()}
                   onClick={() => void doImport()}

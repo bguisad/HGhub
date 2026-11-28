@@ -211,3 +211,47 @@ export function classifyApiError(rawError: unknown): ClassifiedApiError {
     logSummary: clean,
   };
 }
+
+const REMOTE_SOURCE_HTTP_RE = /拉取远程视频源失败（HTTP\s+(\d{3})）/;
+const SOURCE_HTML_PAGE_ERR = "该链接返回的是网页而非视频源文件，请填写原始文件链接或直接粘贴分享口令";
+const EMBEDDED_NET_CODE_RE = /\b(NET_PROXY|NET_TIMEOUT|NET_DNS|NET_TLS|NET_CONN)\b/;
+
+/** Tailor remote source import errors so network failures point to network/proxy instead of lines. */
+export function formatSourceImportError(rawError: unknown): { message: string; networkish: boolean } {
+  const raw = (
+    typeof rawError === "string"
+      ? rawError
+      : rawError instanceof Error
+        ? rawError.message
+        : ""
+  ).trim();
+  if (!raw) return { message: tr("失败"), networkish: false };
+  if (raw === SOURCE_HTML_PAGE_ERR) {
+    return { message: tr("该链接返回的是网页而非视频源文件，请填写原始文件链接或直接粘贴分享口令"), networkish: false };
+  }
+  const remoteHttp = REMOTE_SOURCE_HTTP_RE.exec(raw);
+  if (remoteHttp) {
+    return {
+      message: tr("远程视频源地址无法访问（HTTP {0}），请检查网络、代理或确认链接有效", remoteHttp[1]),
+      networkish: true,
+    };
+  }
+  const embeddedCode = EMBEDDED_NET_CODE_RE.exec(raw)?.[1] as ApiErrorCode | undefined;
+  const code = embeddedCode ?? classifyApiError(raw).code;
+  if (code === "NET_PROXY") {
+    return {
+      message: formatErrorWithCode(tr("代理连接异常，无法拉取远程视频源，请检查代理配置后重试"), "NET_PROXY"),
+      networkish: true,
+    };
+  }
+  if (code === "NET_TIMEOUT" || code === "NET_DNS" || code === "NET_TLS" || code === "NET_CONN") {
+    return {
+      message: formatErrorWithCode(
+        tr("无法连接远程视频源地址，当前网络可能不通，请检查网络或开启代理后重试；也可改用本地文件或直接粘贴口令导入"),
+        code,
+      ),
+      networkish: true,
+    };
+  }
+  return { message: raw, networkish: false };
+}

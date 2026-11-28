@@ -1032,6 +1032,11 @@ const en: Record<string, string> = {
   "{0} 秒后跳过片尾": "Skipping outro in {0}s",
   "立即下一集": "Next now",
   "视频源连接超时，可能存在地区或网络限制，请切换网络或视频源": "Media source timed out (possible region or network restriction); switch network or source",
+  "该链接返回的是网页而非视频源文件，请填写原始文件链接或直接粘贴分享口令": "This URL returned a web page instead of a source file; enter the raw file URL or paste a share code directly",
+  "远程视频源地址无法访问（HTTP {0}），请检查网络、代理或确认链接有效": "Remote source URL is unreachable (HTTP {0}); check your network, proxy, or link validity",
+  "代理连接异常，无法拉取远程视频源，请检查代理配置后重试": "Proxy connection error while fetching remote source; check proxy settings and retry",
+  "无法连接远程视频源地址，当前网络可能不通，请检查网络或开启代理后重试；也可改用本地文件或直接粘贴口令导入": "Cannot reach the remote source URL; check your network or enable a proxy and retry, or import via local file or share code",
+  "网络与代理设置": "Network & Proxy Settings",
 };
 
 export default en;

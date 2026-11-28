@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSPrope
 import App from "./App";
 import SourceOnboarding from "./startup/SourceOnboarding";
 import { api, isMobile, platform, type SubscriptionPreview, type SubscriptionSiteInput } from "../shared/api/api";
+import { formatSourceImportError } from "../shared/api/errorFormat";
 import SubscriptionPicker from "../features/settings/SubscriptionPicker";
 import { exitApp } from "../shared/lib/appLifecycle";
 import { runBack, subscribeNativeBack, syncOhosBackIntercept, useHasBackConsumer } from "../shared/lib/back";
@@ -63,7 +64,7 @@ function DeepLinkImportPrompt({ onImported }: { onImported: () => void }) {
       close();
       onImported();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e || tr("失败")));
+      setError(formatSourceImportError(e).message);
     } finally {
       setBusy(false);
     }

@@ -49,7 +49,7 @@
   `redact_proxy()`、`is_proxy_error()`、`heal_client()`、`err_text()`、
   `redact_error_proxy_auth()`；
   前端统一错误归一化 [`src/shared/api/errorFormat.ts`](../../src/shared/api/errorFormat.ts)
-  （`classifyApiError()`、`formatErrorWithCode()`、`sanitizeErrorForLog()`）与
+  （`classifyApiError()`、`formatErrorWithCode()`、`formatSourceImportError()`、`sanitizeErrorForLog()`）与
   [`src/shared/api/api.ts`](../../src/shared/api/api.ts) 的 `call()`/`READ_ONLY`。
 
 ## 主运行时路径

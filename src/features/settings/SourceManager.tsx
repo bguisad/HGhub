@@ -3,6 +3,7 @@ import {
   api, isMobile,
   type SourceStateSnapshot, type SourceTestOutcome, type SubscriptionPreview, type SubscriptionSiteInput,
 } from "../../shared/api/api";
+import { formatSourceImportError } from "../../shared/api/errorFormat";
 import { useStore } from "../../shared/model/store";
 import { Button, Input, Surface, TextArea } from "../../shared/ui/ios/controls";
 import { Modal, Sheet } from "../../shared/ui/ui";
@@ -71,7 +72,7 @@ export default function SourceManager({ open, onClose }: { open: boolean; onClos
       notifySourceChanged();
       toast(tr("已导入 {0} v{1}", res.summary.name, res.summary.version), "ok");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e || tr("失败")));
+      setError(formatSourceImportError(e).message);
     } finally {
       setBusy(false);
     }
@@ -201,7 +202,7 @@ export default function SourceManager({ open, onClose }: { open: boolean; onClos
         toast(tr("已是最新 v{0}", res.fromVersion), "ok");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(formatSourceImportError(e).message);
     } finally {
       setActionId("");
     }

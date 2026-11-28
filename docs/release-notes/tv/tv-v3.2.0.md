@@ -19,4 +19,4 @@ HGhubX TV 3.2.0 正式版（`com.hghubx.tv`）：新增自定义跳过片头与 
 - 感谢 @zxsos、@makisekurisu-jp 与所有参与 Android TV 大屏体验验收与播放超时排查的社区成员。
 
 ## 验证
-- 本地全量通过 `make test-tv`、`node scripts/test-tv-remote.mjs`（14/14）、`cargo test --lib`（110 passed）、`check-version-sync --target tv`（`3.2.0` / `versionCode=3002000`）、`check-i18n`（1033 条）、`check-doc-links`、`check-size-budgets` 与 `check-shell-purity`，并在 Android 平板（`SM_X700`）完成 TV 版实机验证；GitHub Actions `TV CI` 与 `TV Release` 工作流执行全套遥控器验收与全 ABI 签名构建发布。
+- 本地全量通过 `make test-tv`、`node scripts/test-tv-remote.mjs`（14/14）、`cargo test --lib`（110 passed）、`check-version-sync --target tv`（`3.2.0` / `versionCode=3002000`）、`check-i18n`（1038 条）、`check-doc-links`、`check-size-budgets` 与 `check-shell-purity`，并在 Android 平板（`SM_X700`）完成 TV 版实机验证；GitHub Actions `TV CI` 与 `TV Release` 工作流执行全套遥控器验收与全 ABI 签名构建发布。
