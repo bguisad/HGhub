@@ -94,6 +94,8 @@ pub async fn fetch_bytes_with_url(url: &str) -> Result<(String, Option<String>, 
     );
     let cur_base = base();
     let referer_owned = (!cur_base.is_empty()).then(|| format!("{cur_base}/"));
+    // Keep total fetch+retry wall-clock strictly below Android wry's 30s custom-protocol channel timeout.
+    let deadline = Instant::now() + Duration::from_secs(22);
     with_retry(true, || {
         attempt += 1;
         let attempt = attempt;
@@ -104,6 +106,11 @@ pub async fn fetch_bytes_with_url(url: &str) -> Result<(String, Option<String>, 
         let target = &target;
         let public_dns = &public_dns;
         async move {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining < Duration::from_secs(2) {
+                return Err("请求超时".to_string());
+            }
+            let attempt_timeout = remaining.min(Duration::from_secs(11));
             let using_public_dns = public_dns.load(Ordering::Relaxed);
             let started = Instant::now();
             crate::playback_log::record(
@@ -113,9 +120,9 @@ pub async fn fetch_bytes_with_url(url: &str) -> Result<(String, Option<String>, 
             let mut status = None;
             let mut headers_ms = None;
             let result = async {
-                let resp = get_with_dns(
+                let mut resp = get_with_dns(
                     &url,
-                    Duration::from_secs(20),
+                    attempt_timeout,
                     None,
                     referer.as_deref(),
                     using_public_dns,
@@ -132,7 +139,18 @@ pub async fn fetch_bytes_with_url(url: &str) -> Result<(String, Option<String>, 
                     .get(reqwest::header::CONTENT_TYPE)
                     .and_then(|v| v.to_str().ok())
                     .map(|s| s.to_string());
-                let bytes = resp.bytes().await.map_err(|e| err_text(&e))?.to_vec();
+                let cap = resp.content_length().and_then(|n| usize::try_from(n).ok()).map_or(0, |n| n.min(8 * 1024 * 1024));
+                let mut bytes = Vec::with_capacity(cap);
+                let body_budget = deadline.saturating_duration_since(Instant::now()).max(Duration::from_secs(2));
+                tokio::time::timeout(body_budget, async {
+                    while let Some(chunk) = resp.chunk().await.map_err(|e| err_text(&e))? {
+                        crate::media_stats::record_rx(chunk.len() as u64);
+                        bytes.extend_from_slice(&chunk);
+                    }
+                    Ok::<(), String>(())
+                })
+                .await
+                .map_err(|_| "请求超时".to_string())??;
                 Ok((final_url, ctype, bytes))
             }
             .await;

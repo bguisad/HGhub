@@ -21,3 +21,20 @@ export function mediaErrorMessage(error: MediaError | null): string {
       return formatErrorWithCode(tr("视频加载失败，请重试"), "MEDIA_ERR");
   }
 }
+
+export function hlsErrorMessage(type: string, code?: number, details?: string): string {
+  if (type === "networkError") {
+    if (code === 403 || code === 451) {
+      return formatErrorWithCode(tr("视频源拒绝访问，可能存在地区或防盗链限制，请切换网络或视频源"), `HTTP_${code}`);
+    }
+    if (code === 404 || code === 410) {
+      return formatErrorWithCode(tr("视频资源不存在或已失效，请切换剧集或视频源"), `HTTP_${code}`);
+    }
+    if (code === 504 || details === "manifestLoadTimeOut") {
+      return formatErrorWithCode(tr("视频源连接超时，可能存在地区或网络限制，请切换网络或视频源"), code === 504 ? "HTTP_504" : "MEDIA_TIMEOUT");
+    }
+    return formatErrorWithCode(tr("视频网络加载失败，请检查线路或重试"), "MEDIA_NET");
+  }
+  if (type === "mediaError") return formatErrorWithCode(tr("视频解码异常，请重试"), "MEDIA_DECODE");
+  return formatErrorWithCode(tr("视频暂时无法播放，请重试"), "MEDIA_ERR");
+}

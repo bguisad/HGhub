@@ -68,6 +68,13 @@ export function createHlsRecovery({ hls, video, url, isCurrent, isActive, resume
         onFatal(data);
         return;
       }
+      const code = data.response?.code;
+      const manifestTimedOut = data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR && code === 504;
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR && (code === 403 || code === 451 || manifestTimedOut)) {
+        pending = undefined;
+        onFatal(data);
+        return;
+      }
       pending = data;
       schedule();
     },
