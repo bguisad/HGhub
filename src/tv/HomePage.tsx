@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../shared/api/api";
+import { api, catalogSortDefaultKey } from "../shared/api/api";
 import { useContentPreferences } from "../shared/model/contentPreferences";
 import { contentKey, type TvContent } from "./model";
 import { rankCard, videoCard } from "./catalogCards";
@@ -35,7 +35,7 @@ export default function HomePage({ onOpen, active = true }: { onOpen: (content: 
         }
         if (shelfChannels.length) {
           const settled = await Promise.allSettled(
-            shelfChannels.map((ch) => api.category(ch.id, 1, 15, ch.sorts?.[0]).then((res) => ({ title: ch.label, items: res.items.map(videoCard) }))),
+            shelfChannels.map((ch) => api.category(ch.id, 1, 15, catalogSortDefaultKey(ch.sorts) || undefined).then((res) => ({ title: ch.label, items: res.items.map(videoCard) }))),
           );
           if (!current) return;
           for (const item of settled) {
